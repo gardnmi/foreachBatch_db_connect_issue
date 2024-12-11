@@ -4,6 +4,9 @@ This demo project showcases how `foreachBatch` does not work locally with Databr
 
 ## Requirements
 
+- Access to a Databricks Workspace
+- Access to a Databricks Cluster with Databricks Runtime 15.4LTS
+- Access to the Shared `samples` Catalog in Unity Catalog
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - [VS Code Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers)
 
