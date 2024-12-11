@@ -1,0 +1,80 @@
+version: "3"
+
+tasks:
+  install-terminaltexteffects:
+    desc: "Install terminaltexteffects"
+    cmds:
+      - pip install terminaltexteffects
+    silent: true
+
+
+  update-upgrade-linux-packages:
+    desc: "Update and Upgrade Linux System Packages"
+    deps: [install-terminaltexteffects]
+    cmds:
+      - echo "Updating and Upgrading Linux System Packages" | tte wipe
+      - sudo apt-get update
+      - sudo apt-get upgrade -y
+    silent: true
+
+
+  install-databricks-cli:
+    desc: "Install Databricks CLI"
+    deps: [install-terminaltexteffects]
+    cmds:
+      - |
+        if ! command -v databricks &> /dev/null; then
+          echo "Databricks CLI not found, installing..." | tte wipe
+          sudo curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sudo sh
+        else
+          echo "Databricks CLI is already installed" | tte wipe
+        fi
+    silent: true
+
+
+  configure-databricks-auth:
+      desc: "Set up Databricks authentication"
+      cmds:
+        - |
+          echo "Enter the Databricks Host URL:" | tte --frame-rate=200 wipe
+          read -p "Databricks Host URL: " DATABRICKS_HOST
+
+          if [[ -z "$DATABRICKS_HOST" ]]; then
+            echo "Databricks Host URL cannot be empty. Please enter a valid URL." | tte --frame-rate=200 rain
+            exit 1
+          fi
+
+          echo "Configuring Databricks Authentication for host $DATABRICKS_HOST" | tte rain
+          databricks auth login \
+            --configure-cluster \
+            --host $DATABRICKS_HOST \
+            --profile DEFAULT
+          echo "Databricks authentication configuration completed for host $DATABRICKS_HOST." | tte --frame-rate=200 wipe
+          echo "Test your Databricks Connect connection by runng 'databricks-connect test' command." | tte --frame-rate=200 wipe
+      silent: true
+
+
+  setup-python:
+      desc: "Set up Local Development Environment"
+      deps: [install-terminaltexteffects]
+      cmds:
+        - echo "Installing Python Development Tools and Dependencies" | tte wipe
+        - pip install --upgrade pip
+        - pip install -e .[dev]
+        - |
+          if pip show pyspark > /dev/null 2>&1; then
+            echo "pyspark is installed, uninstalling it..." | tte wipe
+            pip uninstall -y pyspark
+          fi
+      silent: true
+
+
+  setup_environment:
+    desc: "Run all setup tasks"
+    cmds:
+      - task update-upgrade-linux-packages
+      - task setup-python
+      - task install-databricks-cli
+      - task configure-databricks-auth
+      - echo "All setup tasks completed successfully." | tte wipe
+    silent: true
